@@ -31,11 +31,7 @@ class Car(db.Model):
         self.photo = photo
         self.user_id = userid
 
-    def get_id(self):
-        try:
-            return unicode(self.id)  # python 2 support
-        except NameError:
-            return str(self.id)  # python 3 support
+   
 
     
    
@@ -51,12 +47,7 @@ class Favourite(db.Model):
         self.car_id = car_id
         self.user_id = user_id
 
-    def get_id(self):
-        try:
-            return unicode(self.id)  # python 2 support
-        except NameError:
-            return str(self.id)  # python 3 support
-
+   
 
 
 

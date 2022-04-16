@@ -1,22 +1,49 @@
-<script>
-export default {
-    data() {
-        return {
-            message: "Hello World! This is Lab 7"
-        };
-    },
-}
-</script>
+
 
 <template>
     <div class="container">
-      <div class="text-center">
-        <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-        <h1>{{ message }}</h1>
+      <div class="info">
+        <h1>Buy and Sell Cars Online</h1>
+      <p>United Auto Sales provides the fastest, easiest and most user friendly way to buy or sell cars online.
+        Find a Great Price on the Vehicle You Want.
+      </p>
+      <button @click="register" id="register">Register</button> 
+      <button @click="login" id="login">Login</button>
       </div>
-    </div>
-</template>
+    
+      <div class="photo">
+        <img alt="Sample car" class="logo" src="@/assets/car.jpg" width=115%/>
+      </div>
 
+    </div> 
+  
+     
+</template>
+<script>
+export default {
+    data() {
+        return {};
+    },
+    methods:{
+       register(){
+   this.$router.push('/register'); 
+      },
+      login(){
+   this.$router.push('/login'); 
+      }
+    }
+}
+</script>
 <style>
-/* Add any component specific styles here */
+.container{
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  align-items: center;
+}
+p{
+  margin: 4px;
+}
+button{
+  margin:4px;
+}
 </style>

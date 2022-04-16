@@ -22,6 +22,15 @@
             <li class="nav-item">
               <RouterLink class="nav-link" to="/about">About</RouterLink>
             </li>
+            <div class="user">
+              <li class="nav-item">
+              <RouterLink class="nav-link" to="/register">Register</RouterLink>
+            </li>
+             <li class="nav-item">
+              <RouterLink class="nav-link" to="/login">Login</RouterLink>
+            </li>
+            </div>
+           
           </ul>
         </div>
       </div>
@@ -34,5 +43,11 @@ import { RouterLink } from "vue-router";
 </script>
 
 <style>
-/* Add any component specific styles here */
+li{
+  float: right;
+  display: block;
+  padding: 8px;
+
+}
+
 </style>

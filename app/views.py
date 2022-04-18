@@ -5,9 +5,18 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from app import app
-from flask import render_template, request, jsonify, send_file
 import os
+import jwt
+from app import app
+from flask import json,render_template, request, jsonify, send_file
+from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash
+from flask_login import login_user, logout_user, current_user, login_required
+from app import app, db, login_manager
+from app.forms import  RegisterForm, LoginForm
+from datetime import datetime
+from app.models import *
+from flask_wtf.csrf import  generate_csrf
 
 
 ###
@@ -19,6 +28,54 @@ def index():
     return jsonify(message="This is the beginning of our API")
 
 
+@app.route('/api/register', methods=['POST'])
+def register():
+    form = RegisterForm()
+    current_dt = datetime.now()
+    if form.validate_on_submit():
+        image = form.photo.data
+        filename = secure_filename(image.filename)
+        user = Users(username = form.username.data, password = form.password.data, name = form.name.data,
+        email = form.email.data, location = form.location.data, biography = form.biography.data,
+        photo = filename, date_joined = current_dt.strftime("%Y-%m-%d " + "%X"))
+        db.session.add(user)
+        db.session.commit()
+        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return json.jsonify(username = form.username.data, name = form.name.data, photo = filename,
+        email = form.email.data, location = form.location.data, biography = form.biography.data,
+        date_joined = current_dt.strftime("%Y-%m-%d " + "%X"))
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        if form.username.data:
+            username = form.username.data
+            password = form.password.data
+            user = Users.query.filter_by(username=username).first()
+            if user is not None and check_password_hash(user.password, password):
+            # get user id, load into session
+                login_user(user)    
+                payload = {
+                    'username': username,
+                    'password': password
+                }
+                token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+                return json.jsonify(status=200, token = token)@app.route('/api/auth/login', methods=['POST'])
+
+@app.route('/api/auth/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return json.jsonify(status=200)
+
+@login_manager.user_loader
+def load_user(id):
+    return Users.query.get(int(id))
+
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf():
+ return jsonify({'csrf_token': generate_csrf()})
 ###
 # The functions below should be applicable to all Flask apps.
 ###

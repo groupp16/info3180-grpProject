@@ -1,3 +1,28 @@
+<<<<<<< HEAD
+from . import db
+from werkzeug.security import generate_password_hash
+
+class Users(db.Model):
+    id=db.Column(db.Integer, primary_key=True)
+    username=db.Column(db.String(255))
+    password=db.Column(db.String(255))
+    name=db.Column(db.String(255)) 
+    email=db.Column(db.String(255)) 
+    location=db.Column(db.String(255)) 
+    biography=db.Column(db.String(255)) 
+    photo=db.Column(db.String(255))
+    date_joined=db.Column(db.String(255))
+
+    def __init__(self, username, password,name, email, location, biography, photo, date_joined):
+        self.username=username
+        self.password = generate_password_hash(password, method='pbkdf2:sha256')
+        self.name=name
+        self.email=email
+        self.location=location 
+        self.biography=biography
+        self.photo=photo
+        self.date_joined=date_joined
+=======
 # Add any model classes for Flask-SQLAlchemy here
 from enum import unique
 from . import db
@@ -78,6 +103,7 @@ class User(db.Model):
         self.biography = biography
         self.photo = photo
         self.date_joined = date_joined
+>>>>>>> cc11fd2d1f96cdb975e428e80672dced38ee3677
 
     def is_authenticated(self):
         return True
@@ -92,6 +118,9 @@ class User(db.Model):
         try:
             return unicode(self.id)  # python 2 support
         except NameError:
+<<<<<<< HEAD
+            return str(self.id)  # python 3 support
+=======
             return str(self.id)  # python 3 support
     
     def __repr__(self):
@@ -104,3 +133,4 @@ class User(db.Model):
 
 
 
+>>>>>>> cc11fd2d1f96cdb975e428e80672dced38ee3677

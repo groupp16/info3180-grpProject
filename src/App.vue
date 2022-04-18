@@ -2,6 +2,7 @@
 import { RouterLink, RouterView } from 'vue-router'
 import AppHeader from "@/components/AppHeader.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import RegisterForm from './components/RegisterForm.vue';
 </script>
 
 <template>

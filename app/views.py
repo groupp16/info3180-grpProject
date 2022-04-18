@@ -6,6 +6,7 @@ This file creates your application.
 """
 
 import os
+import jwt
 from app import app
 from flask import json,render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
@@ -15,6 +16,7 @@ from app import app, db, login_manager
 from app.forms import  RegisterForm, LoginForm
 from datetime import datetime
 from app.models import *
+from flask_wtf.csrf import  generate_csrf
 
 
 ###
@@ -70,6 +72,10 @@ def logout():
 @login_manager.user_loader
 def load_user(id):
     return Users.query.get(int(id))
+
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf():
+ return jsonify({'csrf_token': generate_csrf()})
 ###
 # The functions below should be applicable to all Flask apps.
 ###

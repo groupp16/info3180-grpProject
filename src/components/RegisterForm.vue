@@ -1,6 +1,6 @@
 <template>
     <h1>Register New User</h1>
-    <form  id="register" name="register" method="POST" enctype="multipart/form-data" @submit.prevent="upload">
+    <form  id="register" name="register" method="POST" enctype="multipart/form-data" @submit.prevent="register">
     
     <label>Name:</label>
     <input type="text" name="name" id="name" required/>
@@ -22,12 +22,11 @@
       
     <label>Photo of yourself:</label>
     <input type="file" name="photo" id="photo" required/>
-
-    <div class="send">
-        <button>Register</button>
-    </div>
     
-
+    <div class="btnpos">
+         <button class="button send">Register</button>
+    </div>
+   
     </form>
 </template>
 
@@ -38,11 +37,49 @@ export default {
 
         }
     },
-    upload()
+    method:{
+        register()
     {
+        let RegisterForm=document.getElementById('RegisterForm');
+        let formdata= new FormData(RegisterForm);
+        fetch("/api/register",{
+            method:'POST',
+            body:formdata,
+            headers:{
+                  'X-CSRFToken': this.csrf_token
+                }
+        })
+        .then(function (response) 
+        {
+            return response.json();
+        })
+        .then(function (data)
+         {
+         // display a success message
+            console.log(data);
+        })
+        .catch(function (error) 
+        {
+            console.log(error);
+        });
+    },
+        getCsrfToken() 
+        {
+            let self = this;
+            fetch('/api/csrf-token')
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data);
+            self.csrf_token = data.csrf_token;
+         })
+        },
+
+        created() 
+        {
+            this.getCsrfToken();
+        }
 
     }
-    
 }
 </script>
 
@@ -87,10 +124,9 @@ button {
     border-radius: 20px;
     justify-content: center;
 }
- .photo{
-     padding: none;
- }
+ 
 .send {
     text-align: center;
+    background:rgb(53, 128, 53)
 }
 </style>

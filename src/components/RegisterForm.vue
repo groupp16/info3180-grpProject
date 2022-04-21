@@ -1,6 +1,6 @@
 <template>
     <h1>Register New User</h1>
-    <form  id="register" name="register" method="POST" enctype="multipart/form-data" @submit.prevent="redirect">
+    <form  id="register" name="register" method="POST" enctype="multipart/form-data" @submit.prevent="register">
     
     <label>Username</label>
     <input type="text" name="username" id="username" required/>
@@ -73,7 +73,7 @@ export default {
                         })   
                 },
                  redirect() {
-            this.$router.push({name: 'login'})
+            this.$router.push({name:'login'})
         }
             }           
 };

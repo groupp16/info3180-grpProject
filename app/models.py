@@ -1,9 +1,10 @@
-<<<<<<< HEAD
 from . import db
 from werkzeug.security import generate_password_hash
 
 class Users(db.Model):
-    id=db.Column(db.Integer, primary_key=True)
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username=db.Column(db.String(255))
     password=db.Column(db.String(255))
     name=db.Column(db.String(255)) 
@@ -11,7 +12,7 @@ class Users(db.Model):
     location=db.Column(db.String(255)) 
     biography=db.Column(db.String(255)) 
     photo=db.Column(db.String(255))
-    date_joined=db.Column(db.String(255))
+    date_joined=db.Column(db.DateTime)
 
     def __init__(self, username, password,name, email, location, biography, photo, date_joined):
         self.username=username
@@ -22,17 +23,30 @@ class Users(db.Model):
         self.biography=biography
         self.photo=photo
         self.date_joined=date_joined
-=======
-# Add any model classes for Flask-SQLAlchemy here
-from enum import unique
-from . import db
-from werkzeug.security import generate_password_hash
-from datetime import datetime
+    
+    def is_authenticated(self):
+        return True
 
-class Car(db.Model):
-    __tablename__ = 'Cars'
+    def is_active(self):
+        return True
 
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        try:
+            return unicode(self.id)  # python 2 support
+        except NameError:
+            return str(self.id)  # python 3 support
+    
+    def __repr__(self):
+        return '<User %r>' % (self.username)
+
+
+class Cars(db.Model):
+    __tablename__ = 'cars'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     description = db.Column(db.String(1000))
     make = db.Column(db.String(50))
     model = db.Column(db.String(50))
@@ -41,8 +55,8 @@ class Car(db.Model):
     transmission = db.Column(db.String(50))
     car_type = db.Column(db.String(50))
     price = db.Column(db.Float)
-    photo = db.Column(db.String(50), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    photo = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer)
 
     def __init__(self, description, make, model, colour, year, transmission, car_type, price, photo, userid):
         self.description = description
@@ -54,83 +68,18 @@ class Car(db.Model):
         self.car_type = car_type
         self.price = price
         self.photo = photo
-        self.user_id = userid
-
+        self.user_id = userid  
    
+class Favourites(db.Model):
+    __tablename__ = 'favourites'
 
+    id = db.Column(db.Integer, primary_key=True, nullable=False,autoincrement=True)
+    car_id = db.Column(db.Integer)
     
-   
-class Favourite(db.Model):
-
-    __tablename__ = 'Favourites'
-
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    car_id = db.Column(db.Integer, db.ForeignKey('car_id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user_id'))
+    user_id = db.Column(db.Integer)
 
     def __init__(self, car_id, user_id):
         self.car_id = car_id
         self.user_id = user_id
 
-   
-
-
-
     
-
-
-
-class User(db.Model):
-
-    __tablename__ = 'Users'
-
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    username = db.Column(db.String(50), unique= True)
-    password = db.Column(db.String(50), unique= True)
-    name = db.Column(db.String(50), unique= True)
-    email = db.Column(db.String(50), unique= True)
-    location = db.Column(db.String(50))
-    biography = db.Column(db.String(1000))
-    photo = db.Column(db.String(50), nullable=False)
-    date_joined = db.Column(db.Datetime)
-
-    def __init__(self, username, password, name, email, location, biography, photo, date_joined):
-        self.username = username
-        self.password = password
-        self.name = name
-        self.email = email
-        self.location = location
-        self.biography = biography
-        self.photo = photo
-        self.date_joined = date_joined
->>>>>>> cc11fd2d1f96cdb975e428e80672dced38ee3677
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        try:
-            return unicode(self.id)  # python 2 support
-        except NameError:
-<<<<<<< HEAD
-            return str(self.id)  # python 3 support
-=======
-            return str(self.id)  # python 3 support
-    
-    def __repr__(self):
-        return '<User %r>' % (self.username)
-
-        
-
-
-
-
-
-
->>>>>>> cc11fd2d1f96cdb975e428e80672dced38ee3677

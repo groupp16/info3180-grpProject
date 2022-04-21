@@ -33,6 +33,7 @@ export default {
 .container{
   display: grid;
   grid-template-columns: 1fr 2fr;
+  align-items: center;
 }
 p{
   margin: 4px;
@@ -47,7 +48,7 @@ button{
     margin:4px;
 }
 .info{
-  align-items: center;
+  text-align: center;
 }
 .btnpos{
   text-align: center;

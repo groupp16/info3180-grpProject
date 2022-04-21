@@ -24,7 +24,7 @@
     <input type="file" name="photo" id="photo" required/>
     
     <div class="btnpos">
-         <button class="button send">Register</button>
+         <button type="submit" name="submit" class="button send">Register</button>
     </div>
    
     </form>

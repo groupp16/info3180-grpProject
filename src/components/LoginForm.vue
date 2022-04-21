@@ -17,41 +17,50 @@
 </template>
 
 <script>
-export default {
-    data() {
-        return{
-
-        }
-    },
-    method:{
-        login()
-    {
-        let LoginForm=document.getElementById('LoginForm');
-        let formdata= new FormData(LoginForm);
-        fetch("/api/auth/login",{
-            method:'POST',
-            body:formdata,
-            headers:{
-                  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ'
-                }
-        })
-        .then(function (response) 
-        {
-            return response.json();
-        })
-        .then(function (data)
-         {
-         // display a success message
-            console.log(data);
-        })
-        .catch(function (error) 
-        {
-            console.log(error);
-        });
-    },
-
-    }
-}
+export default {   
+        data() {     
+            return {
+                 csrf_token: '' 
+            }  
+            }, 
+        created() {     
+                this.getCsrfToken(); 
+            },
+            
+            methods: { 
+               
+                login() {  
+                    let loginform = document.getElementById('login'); 
+                    let form_data = new FormData(loginform);
+                    fetch("/api/auth/login", {     
+                        method: 'POST', 
+                        body: form_data,         
+                        headers: { 
+                            'X-CSRFToken': this.csrf_token         
+                            } 
+                        })     
+                        .then(function (response) {    
+                        return response.json();     
+                        })     
+                        .then(function (data) {         
+                            // display a success message         
+                            console.log(data);    
+                             })     
+                            .catch(function (error) {         
+                                console.log(error);     
+                                });
+                },
+                getCsrfToken() {     
+                    let self = this;     
+                    fetch('/api/csrf-token')       
+                    .then((response) => response.json())      
+                     .then((data) => {         
+                         console.log(data);         
+                         self.csrf_token = data.csrf_token;   
+                        })   
+                } 
+            }
+};
 </script>
 
 

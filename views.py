@@ -5,20 +5,23 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from crypt import methods
-import os
-import jwt
-from app import app
-from flask import json,render_template, request, jsonify, send_file
-from werkzeug.utils import secure_filename
-from werkzeug.security import check_password_hash
-from flask_login import login_user, logout_user, current_user, login_required
-from app import app, db, login_manager
-from app.forms import  RegisterForm, LoginForm, AddCarForm
-from datetime import datetime
-from app.models import *
-from flask _wtf.csrf import  generate_csrf
 
+from app import app,db,login_manager
+from flask import render_template, request, jsonify, send_file,g, make_response,redirect, url_for,flash,send_from_directory
+from flask import request
+import os
+from app.models import *
+from flask_wtf.csrf import generate_csrf
+from werkzeug.security import check_password_hash
+from app.forms import *
+from werkzeug.utils import secure_filename
+from flask_login import login_user, logout_user, current_user, login_required
+
+# Using JWT
+import jwt
+from flask import _request_ctx_stack
+from functools import wraps
+import datetime
 
 ###
 # Routing for your application.
@@ -29,74 +32,171 @@ def index():
     return jsonify(message="This is the beginning of our API")
 
 
+def requires_auth(f):
+  @wraps(f)
+  def decorated(*args, **kwargs):
+    auth = "Bearer "+ request.cookies.get('token', None) 
+
+    if not auth:
+      return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
+
+    parts = auth.split()
+
+    if parts[0].lower() != 'bearer':
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer','token':parts[0]}), 401
+    elif len(parts) == 1:
+      return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
+    elif len(parts) > 2:
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
+
+    token = parts[1]
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
+    except jwt.DecodeError:
+        return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
+
+    g.current_user = user = payload
+    return f(*args, **kwargs)
+
+  return decorated
+
+
+def generate_token(id,name):
+    payload = {
+        'sub': id, # subject, usually a unique identifier
+        'name': name
+    }
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+    return token
+
+
 @app.route('/api/register', methods=['POST'])
 def register():
     form = RegisterForm()
-    current_dt = datetime.now()
-    if form.validate_on_submit():
+   
+    if request.method == 'POST' and form.validate_on_submit():
+        current_dt = datetime.datetime.now()
         image = form.photo.data
         filename = secure_filename(image.filename)
-        user = Users(username = form.username.data, password = form.password.data, name = form.name.data,
-        email = form.email.data, location = form.location.data, biography = form.biography.data,
-        photo = filename, date_joined = current_dt.strftime("%Y-%m-%d " + "%X"))
-        db.session.add(user)
+        
+        username = form.username.data 
+        password = form.password.data 
+        name = form.fullname.data
+        email = form.email.data 
+        location = form.location.data
+        biography = form.biography.data
+        photo = filename
+        date_joined = current_dt.strftime("%Y-%m-%d " + "%X")
+
+        user_info = Users(username,password,name,email,location,biography,photo,date_joined)
+        db.session.add(user_info)
         db.session.commit()
+        
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return json.jsonify(username = form.username.data, name = form.name.data, photo = filename,
-        email = form.email.data, location = form.location.data, biography = form.biography.data,
-        date_joined = current_dt.strftime("%Y-%m-%d " + "%X"))
+        return jsonify(username = username, name = name, photo = filename,
+        email = email, location = location, biography = biography,date_joined = date_joined)
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
-        if form.username.data:
-            username = form.username.data
-            password = form.password.data
-            user = Users.query.filter_by(username=username).first()
-            if user is not None and check_password_hash(user.password, password):
-            # get user id, load into session
+   
+    if form.validate_on_submit() and request.method == 'POST':
+        username = form.username.data
+        password = form.password.data
+        user = Users.query.filter_by(username=username).first()
+        
+        if user is not None and check_password_hash(user.password, password):
+
                 login_user(user)    
-                payload = {
-                    'username': username,
-                    'password': password
-                }
-                token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
-                return json.jsonify(status=200, token = token)@app.route('/api/auth/login', methods=['POST'])
+                token=generate_token(user.id,user.name)
+                resp = make_response(jsonify(error=None, data={'token': "Bearer " +token}, message="Token Generated"))
+                resp.set_cookie('token', token, httponly=True, secure=True)
+                return resp
+        return jsonify(error="Error in login")        
 
 @app.route('/api/auth/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
-    return json.jsonify(status=200)
+    return jsonify(status=200)
+
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
+
+
+@app.route('/api/cars', methods=['POST','GET'])
+@login_required
+@requires_auth
+def explore():
+    # Form data
+    if current_user.is_authenticated:
+       
+        form = AddCarForm()
+
+        # Validate file upload on submit
+        if request.method == 'POST' and form.validate_on_submit():
+            # Get file data and save to your uploads folder
+            
+            pr = float(form.price.data)
+            image = form.photo.data
+            filename = secure_filename(image.filename)
+
+            description= form.description.data
+            make = form.make.data
+            model= form.model.data
+            colour= form.colour.data
+            year= form.year.data
+            transmission= request.form['transmission']
+            car_type= request.form['cartype']
+            price= pr
+            photo = filename
+            user_id=current_user.get_id()
+            car = Cars(description, make, model, colour,year, transmission, car_type, price, photo,user_id)
+            db.session.add(car)
+            db.session.commit()
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
+            return jsonify(description= description, make = make, model= model, colour= colour,
+            year= year, transmission= transmission, car_type= car_type, price= pr, photo = filename,user_id=user_id )
+        
+        if request.method == 'GET':           
+            return jsonify(cars=[i.serialize() for i in  db.session.query(Cars).order_by(Cars.id.desc()).limit(3)])
+            
+@app.route('/api/search', methods=['GET'])
+@login_required
+@requires_auth
+def search():
+    if current_user.is_authenticated:
+        args = request.args
+        make=args.get("make")
+        model=args.get("model")
+
+        # [i.serialize() for i in  Cars.query.filter_by(make=make).order_by(Cars.id.desc()).limit(3)]
+        return jsonify(cars=make)
+            
+
+
+
+
+
+
+
+
+
+
 
 @login_manager.user_loader
 def load_user(id):
     return Users.query.get(int(id))
 
-@app.route('/api/csrf-token', methods=['GET'])
-def get_csrf():
- return jsonify({'csrf_token': generate_csrf()})
 
 
 
-@app.route('/api/cars', methods= ['POST'])
-def cars():
-    form = AddCarForm()
-    if form.validate_on_submit():
-        pr = float(form.price.data)
-        image = form.photo.data
-        filename = secure_filename(image.filename)
-        car = Car(description= form.description.data, make = form.make.data, model= form.model.data, colour= form.colour.data,
-        year= form.year.data, transmission= form.transmission.choices, car_type= form.cartype.choices, price= pr, photo = filename  )
-        db.session.add(car)
-        db.session.commit()
-        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return json.jsonify(description= form.description.data, make = form.make.data, model= form.model.data, colour= form.colour.data,
-        year= form.year.data, transmission= form.transmission.data, car_type= form.cartype.data, price= pr, photo = filename  )
-
-
-    
 
 ###
 # The functions below should be applicable to all Flask apps.
